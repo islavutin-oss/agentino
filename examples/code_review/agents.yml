@@ -1,0 +1,6 @@
+default_agent: reviewer
+
+agents:
+  reviewer:
+    model: gpt-5.4-codex
+    instructions_file: prompts/reviewer.md

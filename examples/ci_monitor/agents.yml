@@ -1,0 +1,38 @@
+defaults:
+  model: gpt-5.4-codex
+  api_key: ${OPENAI_API_KEY}
+
+agents:
+  checker:
+    instructions: |
+      Check CI pipeline status. Report failures clearly
+      with repo name, branch, and error summary.
+    tools:
+      - get_ci_status
+
+  analyst:
+    model: gpt-5.4-codex
+    instructions: |
+      Analyze CI failures. Read logs, identify root cause,
+      suggest a fix. Be specific and actionable.
+    tools:
+      - read_logs
+      - search_code
+
+  notifier:
+    instructions: |
+      Format a clear, concise notification about CI status.
+      Include: what failed, likely cause, suggested fix.
+    tools:
+      - send_slack
+
+pipeline:
+  type: sequence
+  steps:
+    - agent: checker
+      message: "Check all repos for CI failures in the last hour"
+    - agent: analyst
+      message: "Analyze these failures: {previous}"
+      condition: "failure"
+    - agent: notifier
+      message: "Send to #engineering: {previous}"
