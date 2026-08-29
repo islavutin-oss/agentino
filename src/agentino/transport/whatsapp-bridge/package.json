@@ -1,0 +1,17 @@
+{
+  "name": "agentino-whatsapp-bridge",
+  "version": "1.0.0",
+  "description": "WhatsApp bridge for agentino — forwards messages via HTTP",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc.9",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "pino": "^9.0.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
