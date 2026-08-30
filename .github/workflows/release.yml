@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # to attach build artifacts to the release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Attach the artifacts to the release
+        if: github.event_name == 'release'
+        run: gh release upload "$GITHUB_REF_NAME" dist/*
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  # Publishing is a separate job so a build failure never leaves a partial
+  # upload, and so the PyPI credential is scoped to this job alone. It uses
+  # Trusted Publishing (OIDC) — there is no API token stored in the repo.
+  #
+  # Before the first run, configure a pending publisher on PyPI:
+  #   https://pypi.org/manage/account/publishing/
+  #   owner: <the GitHub owner>   repository: agentino
+  #   workflow: release.yml       environment: pypi
+  publish:
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # required for Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

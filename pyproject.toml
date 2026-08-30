@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentino-framework"
+version = "1.1.1"
+description = "Lightweight Python agent framework. Config → agents → run."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.10"
+authors = [{ name = "Iliya Slavutin" }]
+keywords = ["agent", "llm", "tools", "ai", "openai", "anthropic"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Framework :: AsyncIO",
+    "Typing :: Typed",
+]
+dependencies = ["httpx>=0.27", "pyyaml>=6.0", "croniter>=2.0"]
+
+[project.scripts]
+agentino = "agentino.__main__:main"
+
+[project.optional-dependencies]
+# Heavier deps gated behind extras; agentino.tools.std imports try/except them.
+memory = ["numpy>=1.26"]
+docgen = ["reportlab>=4.0", "openpyxl>=3.1", "python-docx>=1.0", "python-pptx>=0.6", "markdown>=3.5"]
+web = ["feedparser>=6.0", "beautifulsoup4>=4.12"]
+
+# Transports. The transport package's docstring pointed at these names before
+# they existed, so `pip install agentino[slack]` failed with "no extra named".
+telegram = ["aiogram>=3.10"]
+slack = ["slack-bolt>=1.18", "aiohttp>=3.9"]
+websocket = ["aiohttp>=3.9"]
+# whatsapp and webhook are HTTP surfaces served by starlette/uvicorn
+serve = ["fastapi>=0.109", "uvicorn>=0.30", "starlette>=0.38"]
+transports = ["agentino-framework[telegram,slack,websocket,serve]"]
+stdtools = ["agentino-framework[memory,docgen,web]"]
+all = ["agentino-framework[memory,docgen,web,telegram,slack,websocket,serve]"]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    # tomllib is 3.11+, and the project supports 3.10. Tests read
+    # pyproject.toml to check the docs against the packaging.
+    'tomli>=2.0; python_version < "3.11"',
+]
+
+[project.urls]
+Homepage = "https://github.com/islavutin-oss/agentino"
+Documentation = "https://github.com/islavutin-oss/agentino"
+Repository = "https://github.com/islavutin-oss/agentino"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentino"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.format]
+# Prose is not code. ruff formats Python inside markdown fences, and its
+# output optimises for a source file, not for a reader: compact dict literals
+# in a request-body example explode into one key per line, and a two-argument
+# call splits across three. Documentation examples are written to be read in
+# the flow of a sentence, so the formatter does not own them.
+exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+# `ruff format` owns line width for code. E501 only ever fires on string
+# literals and docstrings the formatter cannot split, where wrapping would
+# change user-facing output or hurt readability.
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
